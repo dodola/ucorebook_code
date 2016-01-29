@@ -7,32 +7,36 @@ V       := @
 
 # try to infer the correct GCCPREFX
 ifndef GCCPREFIX
-GCCPREFIX := $(shell if i386-ucore-elf-objdump -i 2>&1 | grep '^elf32-i386$$' >/dev/null 2>&1; \
-	then echo 'i386-ucore-elf-'; \
+GCCPREFIX := $(shell if i386-elf-objdump -i 2>&1 | grep '^elf32-i386$$' >/dev/null 2>&1; \
+	then echo 'i386-elf-'; \
 	elif objdump -i 2>&1 | grep 'elf32-i386' >/dev/null 2>&1; \
 	then echo ''; \
 	else echo "***" 1>&2; \
-	echo "*** Error: Couldn't find an i386-ucore-elf version of GCC/binutils." 1>&2; \
-	echo "*** Is the directory with i386-ucore-elf-gcc in your PATH?" 1>&2; \
-	echo "*** If your i386-ucore-elf toolchain is installed with a command" 1>&2; \
-	echo "*** prefix other than 'i386-ucore-elf-', set your GCCPREFIX" 1>&2; \
+	echo "*** Error: Couldn't find an i386-elf version of GCC/binutils." 1>&2; \
+	echo "*** Is the directory with i386-elf-gcc in your PATH?" 1>&2; \
+	echo "*** If your i386-elf toolchain is installed with a command" 1>&2; \
+	echo "*** prefix other than 'i386-elf-', set your GCCPREFIX" 1>&2; \
 	echo "*** environment variable to that prefix and run 'make' again." 1>&2; \
 	echo "*** To turn off this error, run 'gmake GCCPREFIX= ...'." 1>&2; \
 	echo "***" 1>&2; exit 1; fi)
 endif
 
+
 # try to infer the correct QEMU
 ifndef QEMU
-QEMU := $(shell if which qemu > /dev/null; \
+QEMU := $(shell if which qemu-system-i386 > /dev/null; \
+	then echo 'qemu-system-i386'; exit; \
+	elif which i386-elf-qemu > /dev/null; \
+	then echo 'i386-elf-qemu'; exit; \
+	elif which qemu > /dev/null; \
 	then echo 'qemu'; exit; \
-	elif which i386-ucore-elf-qemu > /dev/null; \
-	then echo 'i386-ucore-elf-qemu'; exit; \
 	else \
 	echo "***" 1>&2; \
 	echo "*** Error: Couldn't find a working QEMU executable." 1>&2; \
 	echo "*** Is the directory containing the qemu binary in your PATH" 1>&2; \
 	echo "***" 1>&2; exit 1; fi)
 endif
+
 
 # eliminate default suffix rules
 .SUFFIXES: .c .S .h
@@ -364,4 +368,3 @@ handin: packall
 packall: clean
 	@$(RM) -f $(HANDIN)
 	@tar -czf $(HANDIN) `find . -type f -o -type d | grep -v '^\.*$$' | grep -vF '$(HANDIN)'`
-
